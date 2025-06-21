@@ -35,7 +35,6 @@ pub fn main() !void {
 
             const pixelCenter = camera.getPixel(i_f, j_f);
             const rayDir = pixelCenter - CAMERA_CENTER;
-
             const ray = Ray.init(CAMERA_CENTER, rayDir);
 
             const c = ray.rayColor();
