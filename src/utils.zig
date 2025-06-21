@@ -22,7 +22,7 @@ pub inline fn dot(a: @Vector(3, f32), b: @Vector(3, f32)) f32 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-pub fn cross(a: @Vector(3, f32), b: @Vector(3, f32)) @Vector(3, f32) {
+pub inline fn cross(a: @Vector(3, f32), b: @Vector(3, f32)) @Vector(3, f32) {
     return @Vector(3, f32){
         a[1] * b[2] - a[2] * b[1],
         a[2] * b[0] - a[0] * b[2],
