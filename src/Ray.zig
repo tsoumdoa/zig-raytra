@@ -39,8 +39,6 @@ pub const Ray = struct {
         const b = dot(oc, self.direction);
         const c = dot(oc, oc) - radius * radius;
         const discriminant = b * b - a * c;
-        if (discriminant >= 0) {
-            return true;
-        } else return false;
+        return discriminant >= 0;
     }
 };
