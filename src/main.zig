@@ -6,6 +6,7 @@ const print = std.debug.print;
 const writeToFile = @import("utils.zig").writeToFile;
 const testing = std.testing;
 const utils = @import("utils.zig");
+const Color = @import("Color.zig").Color;
 
 pub fn main() !void {
     const image_width: u32 = 256;
@@ -17,12 +18,15 @@ pub fn main() !void {
     for (0..image_height) |j| {
         var row_buffer = texture_buffer[j];
         const j_f = @as(f32, @floatFromInt(j));
-        const g = @as(u8, @intFromFloat((j_f / (ih_f - 1) * 255.999)));
-        const b = @as(u8, @intCast(0));
         for (0..image_width) |i| {
             const i_f = @as(f32, @floatFromInt(i));
-            const r = @as(u8, @intFromFloat((i_f / (iw_f - 1) * 255.999)));
-            row_buffer[i] = @Vector(3, u8){ r, g, b };
+
+            const r = i_f / (iw_f - 1);
+            const g = j_f / (ih_f - 1);
+            const b = 0;
+            const c = Color.init(r, g, b);
+
+            row_buffer[i] = c.color;
         }
         texture_buffer[j] = row_buffer;
     }
