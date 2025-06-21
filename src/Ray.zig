@@ -33,7 +33,7 @@ pub const Ray = struct {
         return Color.init(t[0], t[1], t[2]);
     }
 
-    pub fn hitSphere(self: Ray, center: Vec3, radius: f32) bool {
+    pub inline fn hitSphere(self: Ray, center: Vec3, radius: f32) bool {
         const oc = self.origin - center;
         const a = dot(self.direction, self.direction);
         const b = dot(oc, self.direction);
