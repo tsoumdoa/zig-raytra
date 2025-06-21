@@ -4,6 +4,8 @@ const stdout = std.io.getStdOut().writer();
 const ArrayList = std.ArrayList;
 const print = std.debug.print;
 const writeToFile = @import("utils.zig").writeToFile;
+const testing = std.testing;
+const utils = @import("utils.zig");
 
 pub fn main() !void {
     const image_width: u32 = 256;
@@ -26,4 +28,8 @@ pub fn main() !void {
     }
 
     try writeToFile("texture.ppm", image_width, image_height, &texture_buffer);
+}
+
+test {
+    testing.refAllDecls(utils);
 }

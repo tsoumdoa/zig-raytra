@@ -15,3 +15,44 @@ pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height:
         }
     }
 }
+
+pub inline fn dot(a: @Vector(3, f32), b: @Vector(3, f32)) f32 {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+pub fn cross(a: @Vector(3, f32), b: @Vector(3, f32)) @Vector(3, f32) {
+    return @Vector(3, f32){
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    };
+}
+
+pub inline fn normalize(v: @Vector(3, f32)) @Vector(3, f32) {
+    const len = std.math.sqrt(dot(v, v));
+    return v / @Vector(3, f32){ len, len, len };
+}
+
+test "dot" {
+    const a = @Vector(3, f32){ 1, 2, 3 };
+    const b = @Vector(3, f32){ 4, 5, 6 };
+    const c = dot(a, b);
+    try std.testing.expectEqual(c, 32);
+}
+
+test "cross" {
+    const a = @Vector(3, f32){ 1, 2, 3 };
+    const b = @Vector(3, f32){ 4, 5, 6 };
+    const c = cross(a, b);
+    try std.testing.expectEqual(c[0], -3);
+    try std.testing.expectEqual(c[1], 6);
+    try std.testing.expectEqual(c[2], -3);
+}
+
+test "normalize" {
+    const a = @Vector(3, f32){ 1, 1, 1 };
+    const b = normalize(a);
+    try std.testing.expectEqual(b[0], 0.57735026);
+    try std.testing.expectEqual(b[1], 0.57735026);
+    try std.testing.expectEqual(b[2], 0.57735026);
+}
