@@ -2,7 +2,9 @@ const std = @import("std");
 const format = std.fmt.format;
 const stdout = std.io.getStdOut().writer();
 
-pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height: u32, texture_buffer: *[image_width][image_height]@Vector(3, u8)) !void {
+pub const Vec3 = @Vector(3, f32);
+
+pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height: u32, texture_buffer: *[image_height][image_width]@Vector(3, u8)) !void {
     const ppm = try std.fs.cwd().createFile(file_name, .{});
     defer ppm.close();
     try format(ppm.writer(), "P3\n {d} {d}\n255\n", .{ image_width, image_height });
