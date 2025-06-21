@@ -12,7 +12,7 @@ const Camera = @import("Camera.zig").Camera;
 const Ray = @import("Ray.zig").Ray;
 
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 256;
+const IMAGE_WIDTH: u32 = 512;
 const IMAGE_WIDTH_F = @as(f32, @floatFromInt(IMAGE_WIDTH));
 const IMAGE_HEIGHT_F = IMAGE_WIDTH_F / ASPECT_RATIO;
 const IMAGE_HEIGHT: u32 = @as(u32, @intFromFloat(IMAGE_HEIGHT_F));

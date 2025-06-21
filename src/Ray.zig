@@ -16,16 +16,26 @@ pub const Ray = struct {
         };
     }
 
+    pub inline fn at(self: Ray, t: f32) Vec3 {
+        const vect = Vec3{ t, t, t };
+        return self.origin + vect * self.direction;
+    }
+
     pub inline fn rayColor(self: Ray) Color {
-        if (self.hitSphere(Vec3{ 0, 0, -1 }, 0.5)) {
-            return Color.init(1, 0, 0);
+        const sp = self.hitSphere(Vec3{ 0, 0, -1 }, 0.5);
+        if (sp > 0) {
+            const norm = normalize(self.at(sp) - Vec3{ 0, 0, -1 });
+            const cv = Vec3{ norm[0] + 1, norm[1] + 1, norm[2] + 1 };
+            const cv_half = cv * @as(@Vector(3, f32), @splat(0.5));
+            const c = Color.init(cv_half[0], cv_half[1], cv_half[2]);
+            return c;
         }
 
         const unitDir = normalize(self.direction);
         const a = 0.5 * (unitDir[1] + 1);
 
         const d = 1.0 - a;
-        const a0 = @Vector(3, f32){ d, d, d };
+        const a0 = @as(@Vector(3, f32), @splat(d));
         const a1 = @Vector(3, f32){ 0.5 * a, 0.7 * a, 1 * a };
 
         const t = a0 + a1;
@@ -33,12 +43,17 @@ pub const Ray = struct {
         return Color.init(t[0], t[1], t[2]);
     }
 
-    pub inline fn hitSphere(self: Ray, center: Vec3, radius: f32) bool {
+    pub inline fn hitSphere(self: Ray, center: Vec3, radius: f32) f32 {
         const oc = self.origin - center;
         const a = dot(self.direction, self.direction);
         const b = dot(oc, self.direction);
         const c = dot(oc, oc) - radius * radius;
         const discriminant = b * b - a * c;
-        return discriminant >= 0;
+
+        if (discriminant < 0) {
+            return -1;
+        } else {
+            return (-b - math.sqrt(discriminant)) / a;
+        }
     }
 };
