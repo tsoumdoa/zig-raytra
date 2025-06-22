@@ -21,12 +21,16 @@ pub const Ray = struct {
         return self.origin + vect * self.direction;
     }
 
+    pub inline fn lengthSquared(self: Ray) f32 {
+        return dot(self.direction, self.direction);
+    }
+
     pub inline fn rayColor(self: Ray) Color {
         const sp = self.hitSphere(Vec3{ 0, 0, -1 }, 0.5);
         if (sp > 0) {
             const norm = normalize(self.at(sp) - Vec3{ 0, 0, -1 });
-            const cv = Vec3{ norm[0] + 1, norm[1] + 1, norm[2] + 1 };
-            const cv_half = cv * @as(@Vector(3, f32), @splat(0.5));
+            const cv = norm + @as(Vec3, @splat(1));
+            const cv_half = cv * @as(Vec3, @splat(0.5));
             const c = Color.init(cv_half[0], cv_half[1], cv_half[2]);
             return c;
         }
@@ -44,16 +48,16 @@ pub const Ray = struct {
     }
 
     pub inline fn hitSphere(self: Ray, center: Vec3, radius: f32) f32 {
-        const oc = self.origin - center;
-        const a = dot(self.direction, self.direction);
-        const b = dot(oc, self.direction);
-        const c = dot(oc, oc) - radius * radius;
-        const discriminant = b * b - a * c;
+        const oc = center - self.origin;
+        const a = self.lengthSquared();
+        const h = dot(self.direction, oc);
+        const c = self.lengthSquared() - radius * radius;
+        const discriminant = h * h - a * c;
 
         if (discriminant < 0) {
             return -1;
         } else {
-            return (-b - math.sqrt(discriminant)) / a;
+            return (h - math.sqrt(discriminant)) / a;
         }
     }
 };
