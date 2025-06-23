@@ -1,4 +1,5 @@
 const std = @import("std");
+const math = std.math;
 const format = std.fmt.format;
 const stdout = std.io.getStdOut().writer();
 
@@ -25,6 +26,10 @@ pub const Interval = struct {
 
     pub inline fn surrounds(self: Interval, x: f32) bool {
         return self.min < x and x < self.max;
+    }
+
+    pub inline fn clamp(self: Interval, x: f32) f32 {
+        return math.clamp(x, self.min, self.max);
     }
 };
 

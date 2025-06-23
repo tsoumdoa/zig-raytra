@@ -19,6 +19,8 @@ pub const Camera = struct {
     viewportUpperLeft: Vec3,
     pixel00Loc: Vec3,
 
+    const samplePerPixel = 10;
+
     pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f32, viewportHeight: f32, cameraCenter: Vec3, focalLength: f32) Camera {
         const imageWidth = @as(f32, @floatFromInt(imageWidthU));
         const imageHeight = @as(f32, @floatFromInt(imageHeightU));
@@ -51,6 +53,13 @@ pub const Camera = struct {
         const vecU = @Vector(3, f32){ u, u, u };
         const vecV = @Vector(3, f32){ v, v, v };
         return self.pixel00Loc + self.pixelDeltaU * vecU + self.pixelDeltaV * vecV;
+    }
+
+    // TODO: get_ray
+    pub inline fn getRay(self: Camera, u: f32, v: f32) Ray {
+        const pixelCenter = self.getPixel(u, v);
+        const rayDir = pixelCenter - self.cameraCenter;
+        return Ray.init(self.cameraCenter, rayDir);
     }
 
     pub inline fn render(
