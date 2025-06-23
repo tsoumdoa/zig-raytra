@@ -1,6 +1,7 @@
 const std = @import("std");
 const format = std.fmt.format;
 const stdout = std.io.getStdOut().writer();
+const math = std.math;
 const ArrayList = std.ArrayList;
 const print = std.debug.print;
 const writeToFile = @import("utils.zig").writeToFile;
@@ -11,9 +12,9 @@ const Vec3 = @import("utils.zig").Vec3;
 const Camera = @import("Camera.zig").Camera;
 const Ray = @import("Ray.zig").Ray;
 const Hittable = @import("Hittable.zig").Hittable;
-const Sphere = @import("Hittable.zig").Sphere;
 const HittableObject = @import("Hittable.zig").HittableObject;
 const ObjectType = @import("Hittable.zig").ObjectType;
+const Sphere = @import("Object.zig").Sphere;
 
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 512;
@@ -33,9 +34,8 @@ pub fn main() !void {
     const arena = arena_impl.allocator();
     defer arena_impl.deinit();
 
-    var hittable = Hittable.init(arena);
-    try hittable.add(HittableObject{
-        .objectType = ObjectType.SPHERE,
+    var world = Hittable.init(arena);
+    try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
                 Vec3{ 0, 0, -1 },
@@ -43,9 +43,15 @@ pub fn main() !void {
             ),
         },
     });
-    for (hittable.hittableObject.items) |hittableObject| {
-        print("{}\n", .{hittableObject.object.sphere});
-    }
+
+    try world.add(HittableObject{
+        .object = .{
+            .sphere = Sphere.init(
+                Vec3{ 0, -100.5, -1 },
+                100,
+            ),
+        },
+    });
 
     var texture_buffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
 
@@ -61,7 +67,7 @@ pub fn main() !void {
             const rayDir = pixelCenter - CAMERA_CENTER;
             const ray = Ray.init(CAMERA_CENTER, rayDir);
 
-            const c = ray.rayColor();
+            const c = ray.rayColor(&world);
 
             row_buffer[i] = c.color;
         }

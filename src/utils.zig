@@ -4,6 +4,30 @@ const stdout = std.io.getStdOut().writer();
 
 pub const Vec3 = @Vector(3, f32);
 
+pub const Interval = struct {
+    min: f32,
+    max: f32,
+
+    pub fn init(min: f32, max: f32) Interval {
+        return Interval{
+            .min = min,
+            .max = max,
+        };
+    }
+
+    pub inline fn size(self: Interval) f32 {
+        return self.max - self.min;
+    }
+
+    pub inline fn contains(self: Interval, x: f32) bool {
+        return self.min <= x and x <= self.max;
+    }
+
+    pub inline fn surrounds(self: Interval, x: f32) bool {
+        return self.min < x and x < self.max;
+    }
+};
+
 pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height: u32, texture_buffer: *[image_height][image_width]@Vector(3, u8)) !void {
     const ppm = try std.fs.cwd().createFile(file_name, .{});
     defer ppm.close();

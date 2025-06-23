@@ -4,6 +4,9 @@ const normalize = @import("utils.zig").normalize;
 const dot = @import("utils.zig").dot;
 const std = @import("std");
 const math = std.math;
+const Hittable = @import("Hittable.zig").Hittable;
+const HitRecord = @import("Hittable.zig").HitRecord;
+const Interval = @import("utils.zig").Interval;
 
 pub const Ray = struct {
     origin: Vec3,
@@ -25,39 +28,16 @@ pub const Ray = struct {
         return dot(self.direction, self.direction);
     }
 
-    pub inline fn rayColor(self: Ray) Color {
-        const sp = self.hitSphere(Vec3{ 0, 0, -1 }, 0.5);
-        if (sp > 0) {
-            const norm = normalize(self.at(sp) - Vec3{ 0, 0, -1 });
-            const cv = norm + @as(Vec3, @splat(1));
-            const cv_half = cv * @as(Vec3, @splat(0.5));
-            const c = Color.init(cv_half[0], cv_half[1], cv_half[2]);
-            return c;
+    pub inline fn rayColor(self: Ray, world: *Hittable) Color {
+        var rec = HitRecord.init(self.origin, self.direction, 0, false);
+        var interval = Interval.init(0, math.floatMax(f32));
+        if (world.hit(&self, &interval, &rec)) {
+            const temp = @as(Vec3, @splat(0.5)) * (rec.normal + @as(Vec3, @splat(1)));
+            return Color.init(temp[0], temp[1], temp[2]);
         }
-
-        const unitDir = normalize(self.direction);
-        const a = 0.5 * (unitDir[1] + 1);
-
-        const d = 1.0 - a;
-        const a0 = @as(@Vector(3, f32), @splat(d));
-        const a1 = @Vector(3, f32){ 0.5 * a, 0.7 * a, 1 * a };
-
-        const t = a0 + a1;
-
-        return Color.init(t[0], t[1], t[2]);
-    }
-
-    pub inline fn hitSphere(self: Ray, center: Vec3, radius: f32) f32 {
-        const oc = center - self.origin;
-        const a = self.lengthSquared();
-        const h = dot(self.direction, oc);
-        const c = self.lengthSquared() - radius * radius;
-        const discriminant = h * h - a * c;
-
-        if (discriminant < 0) {
-            return -1;
-        } else {
-            return (h - math.sqrt(discriminant)) / a;
-        }
+        const unitDirection = normalize(self.direction);
+        const a = @as(Vec3, @splat(0.5)) * (@as(Vec3, @splat(unitDirection[1] + 1)));
+        const b = (@as(Vec3, @splat(1)) - a) * @as(Vec3, @splat(1)) + a * Vec3{ 0.5, 0.7, 1.0 };
+        return Color.init(b[0], b[1], b[2]);
     }
 };
