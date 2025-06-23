@@ -53,28 +53,18 @@ pub fn main() !void {
         },
     });
 
-    var texture_buffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
+    var textureBuffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
 
-    const camera = Camera.init(IMAGE_WIDTH_F, IMAGE_HEIGHT_F, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, CAMERA_CENTER, FOCAL_LENGTH);
-
-    for (0..IMAGE_HEIGHT) |j| {
-        var row_buffer = texture_buffer[j];
-        const j_f = @as(f32, @floatFromInt(j));
-        for (0..IMAGE_WIDTH) |i| {
-            const i_f = @as(f32, @floatFromInt(i));
-
-            const pixelCenter = camera.getPixel(i_f, j_f);
-            const rayDir = pixelCenter - CAMERA_CENTER;
-            const ray = Ray.init(CAMERA_CENTER, rayDir);
-
-            const c = ray.rayColor(&world);
-
-            row_buffer[i] = c.color;
-        }
-        texture_buffer[j] = row_buffer;
-    }
-
-    try writeToFile("texture.ppm", IMAGE_WIDTH, IMAGE_HEIGHT, &texture_buffer);
+    const camera = Camera.init(
+        IMAGE_WIDTH,
+        IMAGE_HEIGHT,
+        VIEWPORT_WIDTH,
+        VIEWPORT_HEIGHT,
+        CAMERA_CENTER,
+        FOCAL_LENGTH,
+    );
+    try camera.render(IMAGE_HEIGHT, IMAGE_WIDTH, &world, &textureBuffer);
+    try writeToFile("texture.ppm", IMAGE_WIDTH, IMAGE_HEIGHT, &textureBuffer);
 }
 
 test {

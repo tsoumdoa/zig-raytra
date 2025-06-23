@@ -60,8 +60,8 @@ pub const Hittable = struct {
         var hitAnything = false;
         var closestSoFar = rayT.max;
 
-        const interval = Interval.init(rayT.min, closestSoFar);
         for (self.hittableObject.items) |hittableObject| {
+            const interval = Interval.init(rayT.min, closestSoFar);
             const hitP = switch (hittableObject.object) {
                 .sphere => |sphere| sphere.hit(r, interval, &tempRec),
             };
