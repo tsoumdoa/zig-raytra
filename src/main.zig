@@ -15,6 +15,7 @@ const Hittable = @import("Hittable.zig").Hittable;
 const HittableObject = @import("Hittable.zig").HittableObject;
 const ObjectType = @import("Hittable.zig").ObjectType;
 const Sphere = @import("Object.zig").Sphere;
+const Random = std.Random;
 
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 512;
@@ -33,6 +34,13 @@ pub fn main() !void {
     var arena_impl = std.heap.ArenaAllocator.init(gpa);
     const arena = arena_impl.allocator();
     defer arena_impl.deinit();
+
+    var prng = Random.DefaultPrng.init(blk: {
+        var seed: u64 = undefined;
+        try std.posix.getrandom(std.mem.asBytes(&seed));
+        break :blk seed;
+    });
+    const rand = prng.random();
 
     var world = Hittable.init(arena);
     try world.add(HittableObject{
@@ -55,13 +63,14 @@ pub fn main() !void {
 
     var textureBuffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
 
-    const camera = Camera.init(
+    const camera = try Camera.init(
         IMAGE_WIDTH,
         IMAGE_HEIGHT,
         VIEWPORT_WIDTH,
         VIEWPORT_HEIGHT,
         CAMERA_CENTER,
         FOCAL_LENGTH,
+        rand,
     );
     try camera.render(IMAGE_HEIGHT, IMAGE_WIDTH, &world, &textureBuffer);
     try writeToFile("texture.ppm", IMAGE_WIDTH, IMAGE_HEIGHT, &textureBuffer);
