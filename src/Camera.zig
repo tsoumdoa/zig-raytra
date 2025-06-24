@@ -7,6 +7,7 @@ const Hittable = @import("Hittable.zig").Hittable;
 const Color = @import("Color.zig").Color;
 const HitRecord = @import("Hittable.zig").HitRecord;
 const Interval = @import("utils.zig").Interval;
+const Random = std.Random;
 
 pub const Camera = struct {
     imageWidth: u32,
@@ -18,10 +19,11 @@ pub const Camera = struct {
     pixelDeltaV: Vec3,
     viewportUpperLeft: Vec3,
     pixel00Loc: Vec3,
+    rand: Random,
 
-    const samplePerPixel = 10;
+    const samplePerPixel = 100;
 
-    pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f32, viewportHeight: f32, cameraCenter: Vec3, focalLength: f32) Camera {
+    pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f32, viewportHeight: f32, cameraCenter: Vec3, focalLength: f32, random: Random) !Camera {
         const imageWidth = @as(f32, @floatFromInt(imageWidthU));
         const imageHeight = @as(f32, @floatFromInt(imageHeightU));
         const vu = Vec3{ viewportWidth, 0, 0 };
@@ -46,20 +48,23 @@ pub const Camera = struct {
             .pixelDeltaV = pdv,
             .viewportUpperLeft = vul,
             .pixel00Loc = p0l,
+            .rand = random,
         };
     }
 
-    pub inline fn getPixel(self: Camera, u: f32, v: f32) Vec3 {
-        const vecU = @Vector(3, f32){ u, u, u };
-        const vecV = @Vector(3, f32){ v, v, v };
-        return self.pixel00Loc + self.pixelDeltaU * vecU + self.pixelDeltaV * vecV;
+    pub inline fn getRay(self: Camera, i: f32, j: f32) Ray {
+        const offset = self.sampleSquare();
+        const offsetX = @as(Vec3, @splat(i + offset[0])) * self.pixelDeltaU;
+        const offsetY = @as(Vec3, @splat(j + offset[1])) * self.pixelDeltaV;
+        const pixelSample = self.pixel00Loc + offsetX + offsetY;
+        const rayDir = pixelSample - self.cameraCenter;
+        return Ray.init(self.cameraCenter, rayDir);
     }
 
-    // TODO: get_ray
-    pub inline fn getRay(self: Camera, u: f32, v: f32) Ray {
-        const pixelCenter = self.getPixel(u, v);
-        const rayDir = pixelCenter - self.cameraCenter;
-        return Ray.init(self.cameraCenter, rayDir);
+    pub inline fn sampleSquare(self: Camera) Vec3 {
+        const u = self.rand.float(f32);
+        const v = self.rand.float(f32);
+        return Vec3{ u - 0.5, v - 0.5, 0 };
     }
 
     pub inline fn render(
@@ -73,15 +78,17 @@ pub const Camera = struct {
             var rowBuffer = textureBuffer[j];
             const j_f = @as(f32, @floatFromInt(j));
             for (0..self.imageWidth) |i| {
-                const i_f = @as(f32, @floatFromInt(i));
+                var pixelColor = Vec3{ 0, 0, 0 };
 
-                const pixelCenter = self.getPixel(i_f, j_f);
-                const rayDir = pixelCenter - self.cameraCenter;
-                const ray = Ray.init(self.cameraCenter, rayDir);
+                for (0..samplePerPixel) |_| {
+                    const i_f = @as(f32, @floatFromInt(i));
+                    const ray = self.getRay(i_f, j_f);
+                    pixelColor += ray.rayColor(world);
+                }
 
-                const c = ray.rayColor(world);
-
-                rowBuffer[i] = c.color;
+                pixelColor /= @as(Vec3, @splat(samplePerPixel));
+                const colRes = Color.init(pixelColor[0], pixelColor[1], pixelColor[2]);
+                rowBuffer[i] = colRes.color;
             }
             textureBuffer[j] = rowBuffer;
         }

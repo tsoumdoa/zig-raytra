@@ -28,16 +28,16 @@ pub const Ray = struct {
         return dot(self.direction, self.direction);
     }
 
-    pub inline fn rayColor(self: Ray, world: *Hittable) Color {
+    pub inline fn rayColor(self: Ray, world: *Hittable) Vec3 {
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0, math.floatMax(f32));
         if (world.hit(&self, &interval, &rec)) {
             const temp = @as(Vec3, @splat(0.5)) * (rec.normal + @as(Vec3, @splat(1)));
-            return Color.init(temp[0], temp[1], temp[2]);
+            return temp;
         }
         const unitDirection = normalize(self.direction);
         const a = @as(Vec3, @splat(0.5)) * (@as(Vec3, @splat(unitDirection[1] + 1)));
         const b = (@as(Vec3, @splat(1)) - a) * @as(Vec3, @splat(1)) + a * Vec3{ 0.5, 0.7, 1.0 };
-        return Color.init(b[0], b[1], b[2]);
+        return b;
     }
 };
