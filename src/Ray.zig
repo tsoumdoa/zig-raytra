@@ -32,7 +32,7 @@ pub const Ray = struct {
     pub fn rayColor(self: Ray, rand: std.Random, world: *Hittable, depth: u8) Vec3 {
         if (depth <= 0) return Vec3{ 0, 0, 0 };
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
-        var interval = Interval.init(0, math.floatMax(f64));
+        var interval = Interval.init(0.001, math.floatMax(f64));
         if (world.hit(&self, &interval, &rec)) {
             const dir = randomOnSphere(rand, rec.normal);
             const ray = Ray.init(rec.p, dir);
