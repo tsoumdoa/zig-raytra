@@ -8,9 +8,9 @@ const Interval = @import("utils.zig").Interval;
 
 pub const Sphere = struct {
     center: Vec3,
-    radius: f32,
+    radius: f64,
 
-    pub fn init(center: Vec3, radius: f32) Sphere {
+    pub fn init(center: Vec3, radius: f64) Sphere {
         return Sphere{
             .center = center,
             .radius = radius,

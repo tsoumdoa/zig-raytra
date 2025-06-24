@@ -17,16 +17,16 @@ const ObjectType = @import("Hittable.zig").ObjectType;
 const Sphere = @import("Object.zig").Sphere;
 const Random = std.Random;
 
-const ASPECT_RATIO: f32 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 512;
-const IMAGE_WIDTH_F = @as(f32, @floatFromInt(IMAGE_WIDTH));
+const ASPECT_RATIO: f64 = 16.0 / 9.0;
+const IMAGE_WIDTH: u32 = 400;
+const IMAGE_WIDTH_F = @as(f64, @floatFromInt(IMAGE_WIDTH));
 const IMAGE_HEIGHT_F = IMAGE_WIDTH_F / ASPECT_RATIO;
 const IMAGE_HEIGHT: u32 = @as(u32, @intFromFloat(IMAGE_HEIGHT_F));
 
-const FOCAL_LENGTH: f32 = 1.0;
-const VIEWPORT_HEIGHT: f32 = 2.0;
-const VIEWPORT_WIDTH: f32 = VIEWPORT_HEIGHT * ASPECT_RATIO;
-const CAMERA_CENTER: Vec3 = @Vector(3, f32){ 0, 0, 0 };
+const FOCAL_LENGTH: f64 = 1.0;
+const VIEWPORT_HEIGHT: f64 = 2.0;
+const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * ASPECT_RATIO;
+const CAMERA_CENTER: Vec3 = @Vector(3, f64){ 0, 0, 0 };
 
 pub fn main() !void {
     var gpa_impl: std.heap.GeneralPurposeAllocator(.{}) = .{};
