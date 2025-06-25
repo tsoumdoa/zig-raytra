@@ -7,6 +7,7 @@ const Ray = @import("Ray.zig").Ray;
 const dot = @import("utils.zig").dot;
 const object = @import("Object.zig");
 const Interval = @import("utils.zig").Interval;
+const Color = @import("Color.zig").Color;
 
 pub const HitRecord = struct {
     p: Vec3,

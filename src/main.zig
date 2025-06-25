@@ -16,6 +16,9 @@ const HittableObject = @import("Hittable.zig").HittableObject;
 const ObjectType = @import("Hittable.zig").ObjectType;
 const Sphere = @import("Object.zig").Sphere;
 const Random = std.Random;
+const Material = @import("Material.zig").Material;
+const Lambertian = @import("Material.zig").Lambertian;
+const Steel = @import("Material.zig").Steel;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 400;
@@ -43,20 +46,25 @@ pub fn main() !void {
     const rand = prng.random();
 
     var world = Hittable.init(arena);
+
+    const middleSphere = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
+    const groundSphere = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
+
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
                 Vec3{ 0, 0, -1 },
                 0.5,
+                .{ .material = .{ .Lambertian = middleSphere } },
             ),
         },
     });
-
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
                 Vec3{ 0, -100.5, -1 },
                 100,
+                .{ .material = .{ .Lambertian = groundSphere } },
             ),
         },
     });

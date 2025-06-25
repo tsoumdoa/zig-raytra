@@ -5,15 +5,18 @@ const dot = @import("utils.zig").dot;
 const std = @import("std");
 const math = std.math;
 const Interval = @import("utils.zig").Interval;
+const Material = @import("Material.zig").Material;
 
 pub const Sphere = struct {
     center: Vec3,
     radius: f64,
+    material: Material,
 
-    pub fn init(center: Vec3, radius: f64) Sphere {
+    pub fn init(center: Vec3, radius: f64, material: Material) Sphere {
         return Sphere{
             .center = center,
             .radius = radius,
+            .material = material,
         };
     }
 

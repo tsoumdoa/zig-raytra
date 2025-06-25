@@ -4,10 +4,12 @@ const normalize = @import("utils.zig").normalize;
 const dot = @import("utils.zig").dot;
 const std = @import("std");
 const math = std.math;
+const Random = std.Random;
 const Hittable = @import("Hittable.zig").Hittable;
 const HitRecord = @import("Hittable.zig").HitRecord;
 const Interval = @import("utils.zig").Interval;
 const randomOnSphere = @import("utils.zig").randomOnSphere;
+const randomUnitVector = @import("utils.zig").randomUnitVector;
 
 pub const Ray = struct {
     origin: Vec3,
@@ -29,14 +31,49 @@ pub const Ray = struct {
         return dot(self.direction, self.direction);
     }
 
-    pub fn rayColor(self: Ray, rand: std.Random, world: *Hittable, depth: u8) Vec3 {
+    pub fn rayColor(
+        self: Ray,
+        rand: std.Random,
+        world: *Hittable,
+        depth: u8,
+    ) Vec3 {
         if (depth <= 0) return Vec3{ 0, 0, 0 };
+
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0.001, math.floatMax(f64));
+
+        //world.hit sld return the hit objec or undefined
         if (world.hit(&self, &interval, &rec)) {
-            const dir = randomOnSphere(rand, rec.normal) + rec.normal;
-            const ray = Ray.init(rec.p, dir);
-            return @as(Vec3, @splat(0.5)) * ray.rayColor(rand, world, depth - 1);
+            var scattered: Ray = undefined;
+            var attenuation: Vec3 = undefined;
+
+            //if has object then run the following logic... 
+            for (world.hittableObject.items) |hittableObject| {
+                var didScatter = false;
+                switch (hittableObject.object) {
+                    .sphere => |sphere| {
+                        const material = sphere.material.material;
+                        switch (material) {
+                            .Lambertian => |lambertian| {
+                                if (lambertian.scatter(&rec, &attenuation, &scattered, rand)) {
+                                    didScatter = true;
+                                }
+                            },
+                            .Steel => |steel| {
+                                const rIn = Ray.init(rec.p, rec.normal + randomUnitVector(rand));
+                                if (steel.scatter(&rIn, &rec, &attenuation, &scattered)) {
+                                    didScatter = true;
+                                }
+                            },
+                        }
+                    },
+                }
+                if (didScatter) {
+                    return attenuation * scattered.rayColor(rand, world, depth - 1);
+                } else {
+                    return Vec3{ 0, 0, 0 };
+                }
+            }
         }
         const unitDirection = normalize(self.direction);
         const a = @as(Vec3, @splat(0.5)) * (@as(Vec3, @splat(unitDirection[1] + 1)));
