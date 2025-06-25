@@ -42,4 +42,9 @@ pub const Ray = struct {
         const a = @as(Vec3, @splat(0.5)) * (@as(Vec3, @splat(unitDirection[1] + 1)));
         return (@as(Vec3, @splat(1)) - a) * @as(Vec3, @splat(1)) + a * Vec3{ 0.5, 0.7, 1.0 };
     }
+
+    pub inline fn nearZero(self: Ray) bool {
+        const s = 1e-8;
+        return (@abs(self.direction[0]) < s and @abs(self.direction[1]) < s and @abs(self.direction[2]) < s);
+    }
 };
