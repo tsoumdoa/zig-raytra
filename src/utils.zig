@@ -3,35 +3,65 @@ const math = std.math;
 const format = std.fmt.format;
 const stdout = std.io.getStdOut().writer();
 
-pub const Vec3 = @Vector(3, f32);
+pub const Vec3 = @Vector(3, f64);
 
 pub const Interval = struct {
-    min: f32,
-    max: f32,
+    min: f64,
+    max: f64,
 
-    pub fn init(min: f32, max: f32) Interval {
+    pub fn init(min: f64, max: f64) Interval {
         return Interval{
             .min = min,
             .max = max,
         };
     }
 
-    pub inline fn size(self: Interval) f32 {
+    pub inline fn size(self: Interval) f64 {
         return self.max - self.min;
     }
 
-    pub inline fn contains(self: Interval, x: f32) bool {
+    pub inline fn contains(self: Interval, x: f64) bool {
         return self.min <= x and x <= self.max;
     }
 
-    pub inline fn surrounds(self: Interval, x: f32) bool {
+    pub inline fn surrounds(self: Interval, x: f64) bool {
         return self.min < x and x < self.max;
     }
 
-    pub inline fn clamp(self: Interval, x: f32) f32 {
+    pub inline fn clamp(self: Interval, x: f64) f64 {
         return math.clamp(x, self.min, self.max);
     }
 };
+
+pub inline fn randomUnitVector(random: std.Random) Vec3 {
+    while (true) {
+        const x = random.float(f64) * 2 - 1;
+        const y = random.float(f64) * 2 - 1;
+        const z = random.float(f64) * 2 - 1;
+
+        const xSquared = x * x;
+        const ySquared = y * y;
+        const zSquared = z * z;
+        const lengthSq = xSquared + ySquared + zSquared;
+
+        if (1e-160 < lengthSq and lengthSq <= 1) {
+            const length = math.sqrt(lengthSq);
+            return @Vector(3, f64){
+                x / length,
+                y / length,
+                z / length,
+            };
+        }
+    }
+}
+
+pub inline fn randomOnSphere(random: std.Random, normal: Vec3) Vec3 {
+    const onUnitSphere = randomUnitVector(random);
+    if (dot(onUnitSphere, normal) >= 0) {
+        return onUnitSphere;
+    }
+    return -onUnitSphere;
+}
 
 pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height: u32, texture_buffer: *[image_height][image_width]@Vector(3, u8)) !void {
     const ppm = try std.fs.cwd().createFile(file_name, .{});
@@ -47,33 +77,33 @@ pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height:
     }
 }
 
-pub inline fn dot(a: @Vector(3, f32), b: @Vector(3, f32)) f32 {
+pub inline fn dot(a: @Vector(3, f64), b: @Vector(3, f64)) f64 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-pub inline fn cross(a: @Vector(3, f32), b: @Vector(3, f32)) @Vector(3, f32) {
-    return @Vector(3, f32){
+pub inline fn cross(a: @Vector(3, f64), b: @Vector(3, f64)) @Vector(3, f64) {
+    return @Vector(3, f64){
         a[1] * b[2] - a[2] * b[1],
         a[2] * b[0] - a[0] * b[2],
         a[0] * b[1] - a[1] * b[0],
     };
 }
 
-pub inline fn normalize(v: @Vector(3, f32)) @Vector(3, f32) {
+pub inline fn normalize(v: @Vector(3, f64)) @Vector(3, f64) {
     const len = std.math.sqrt(dot(v, v));
-    return v / @Vector(3, f32){ len, len, len };
+    return v / @Vector(3, f64){ len, len, len };
 }
 
 test "dot" {
-    const a = @Vector(3, f32){ 1, 2, 3 };
-    const b = @Vector(3, f32){ 4, 5, 6 };
+    const a = @Vector(3, f64){ 1, 2, 3 };
+    const b = @Vector(3, f64){ 4, 5, 6 };
     const c = dot(a, b);
     try std.testing.expectEqual(c, 32);
 }
 
 test "cross" {
-    const a = @Vector(3, f32){ 1, 2, 3 };
-    const b = @Vector(3, f32){ 4, 5, 6 };
+    const a = @Vector(3, f64){ 1, 2, 3 };
+    const b = @Vector(3, f64){ 4, 5, 6 };
     const c = cross(a, b);
     try std.testing.expectEqual(c[0], -3);
     try std.testing.expectEqual(c[1], 6);
@@ -81,7 +111,7 @@ test "cross" {
 }
 
 test "normalize" {
-    const a = @Vector(3, f32){ 1, 1, 1 };
+    const a = @Vector(3, f64){ 1, 1, 1 };
     const b = normalize(a);
     try std.testing.expectEqual(b[0], 0.57735026);
     try std.testing.expectEqual(b[1], 0.57735026);

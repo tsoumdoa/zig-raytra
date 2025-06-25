@@ -22,10 +22,11 @@ pub const Camera = struct {
     rand: Random,
 
     const samplePerPixel = 100;
+    const maxDepth: u8 = 50;
 
-    pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f32, viewportHeight: f32, cameraCenter: Vec3, focalLength: f32, random: Random) !Camera {
-        const imageWidth = @as(f32, @floatFromInt(imageWidthU));
-        const imageHeight = @as(f32, @floatFromInt(imageHeightU));
+    pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f64, viewportHeight: f64, cameraCenter: Vec3, focalLength: f32, rand: Random) !Camera {
+        const imageWidth = @as(f64, @floatFromInt(imageWidthU));
+        const imageHeight = @as(f64, @floatFromInt(imageHeightU));
         const vu = Vec3{ viewportWidth, 0, 0 };
         const vh = Vec3{ 0, -viewportHeight, 0 };
 
@@ -35,8 +36,8 @@ pub const Camera = struct {
         const pdu = Vec3{ viewportWidth / imageWidth, 0, 0 };
         const pdv = Vec3{ 0, -viewportHeight / imageHeight, 0 };
 
-        const vul = cameraCenter - @Vector(3, f32){ 0, 0, focalLength } - vu_half - vh_half;
-        const p0l = vul + @Vector(3, f32){ 0.5, 0.5, 0.5 } * (pdu + pdv);
+        const vul = cameraCenter - @Vector(3, f64){ 0, 0, focalLength } - vu_half - vh_half;
+        const p0l = vul + @Vector(3, f64){ 0.5, 0.5, 0.5 } * (pdu + pdv);
 
         return Camera{
             .imageWidth = imageWidthU,
@@ -48,11 +49,11 @@ pub const Camera = struct {
             .pixelDeltaV = pdv,
             .viewportUpperLeft = vul,
             .pixel00Loc = p0l,
-            .rand = random,
+            .rand = rand,
         };
     }
 
-    pub inline fn getRay(self: Camera, i: f32, j: f32) Ray {
+    pub inline fn getRay(self: Camera, i: f64, j: f64) Ray {
         const offset = self.sampleSquare();
         const offsetX = @as(Vec3, @splat(i + offset[0])) * self.pixelDeltaU;
         const offsetY = @as(Vec3, @splat(j + offset[1])) * self.pixelDeltaV;
@@ -62,8 +63,8 @@ pub const Camera = struct {
     }
 
     pub inline fn sampleSquare(self: Camera) Vec3 {
-        const u = self.rand.float(f32);
-        const v = self.rand.float(f32);
+        const u = self.rand.float(f64);
+        const v = self.rand.float(f64);
         return Vec3{ u - 0.5, v - 0.5, 0 };
     }
 
@@ -76,14 +77,14 @@ pub const Camera = struct {
     ) !void {
         for (0..self.imageHeight) |j| {
             var rowBuffer = textureBuffer[j];
-            const j_f = @as(f32, @floatFromInt(j));
+            const j_f = @as(f64, @floatFromInt(j));
             for (0..self.imageWidth) |i| {
                 var pixelColor = Vec3{ 0, 0, 0 };
 
                 for (0..samplePerPixel) |_| {
-                    const i_f = @as(f32, @floatFromInt(i));
+                    const i_f = @as(f64, @floatFromInt(i));
                     const ray = self.getRay(i_f, j_f);
-                    pixelColor += ray.rayColor(world);
+                    pixelColor += ray.rayColor(self.rand, world, maxDepth);
                 }
 
                 pixelColor /= @as(Vec3, @splat(samplePerPixel));

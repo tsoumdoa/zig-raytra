@@ -11,10 +11,10 @@ const Interval = @import("utils.zig").Interval;
 pub const HitRecord = struct {
     p: Vec3,
     normal: Vec3,
-    t: f32,
+    t: f64,
     fontFace: bool,
 
-    pub inline fn init(p: Vec3, normal: Vec3, t: f32, fontFace: bool) HitRecord {
+    pub inline fn init(p: Vec3, normal: Vec3, t: f64, fontFace: bool) HitRecord {
         return HitRecord{
             .p = p,
             .normal = normal,
