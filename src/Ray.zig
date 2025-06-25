@@ -34,7 +34,7 @@ pub const Ray = struct {
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0.001, math.floatMax(f64));
         if (world.hit(&self, &interval, &rec)) {
-            const dir = randomOnSphere(rand, rec.normal);
+            const dir = randomOnSphere(rand, rec.normal) + rec.normal;
             const ray = Ray.init(rec.p, dir);
             return @as(Vec3, @splat(0.5)) * ray.rayColor(rand, world, depth - 1);
         }
