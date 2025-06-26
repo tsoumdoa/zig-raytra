@@ -12,6 +12,7 @@ pub const Material = struct {
     material: union(enum) {
         Lambertian: Lambertian,
         Metal: Metal,
+        Dielectric: Dielectric,
     },
 };
 
@@ -30,7 +31,13 @@ pub const Lambertian = struct {
         };
     }
 
-    pub inline fn scatter(self: Lambertian, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray, random: Random) bool {
+    pub inline fn scatter(
+        self: Lambertian,
+        rec: *HitRecord,
+        attenuation: *Vec3,
+        scattered: *Ray,
+        random: Random,
+    ) bool {
         var scatterDir = rec.normal + randomUnitVector(random);
         const scatterRay = Ray.init(rec.normal, scatterDir);
         if (scatterRay.nearZero()) {
@@ -60,16 +67,65 @@ pub const Metal = struct {
         };
     }
 
-    pub inline fn reflect(self: Metal, v: Vec3, n: Vec3) Vec3 {
-        _ = self;
-        return v - (@as(Vec3, @splat(2 * dot(v, n))) * n);
-    }
-
     pub inline fn scatter(self: Metal, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray, random: Random) bool {
-        const reflected = self.reflect(rIn.direction, rec.normal);
+        const reflected = reflect(rIn.direction, rec.normal);
         const unitizedReflected = normalize(reflected) + (@as(Vec3, @splat(self.fuzz))) * randomUnitVector(random);
         scattered.* = Ray.init(rec.p, unitizedReflected);
         attenuation.* = Vec3{ self.r, self.g, self.b };
         return true;
     }
 };
+
+pub const Dielectric = struct {
+    refractionIndex: f64,
+
+    pub fn init(ir: f64) Dielectric {
+        return Dielectric{
+            .refractionIndex = ir,
+        };
+    }
+
+    pub inline fn scatter(self: Dielectric, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray, random: Random) bool {
+        attenuation.* = Vec3{ 1.0, 1.0, 1.0 };
+        const ri = self.riValue(rec);
+        const unitDir = normalize(rIn.direction);
+        const cosTheta = @min(dot(-unitDir, rec.normal), 1.0);
+        const sinTheta = @sqrt(1 - cosTheta * cosTheta);
+
+        const cannotRefract = ri * sinTheta > 1.0;
+        var dir: Vec3 = undefined;
+        if (cannotRefract or reflectance(cosTheta, ri) > random.float(f64)) {
+            dir = reflect(unitDir, rec.normal);
+        } else {
+            dir = refract(unitDir, rec.normal, ri);
+        }
+
+        scattered.* = Ray.init(rec.p, dir);
+        return true;
+    }
+
+    pub inline fn riValue(self: Dielectric, rec: *HitRecord) f64 {
+        if (rec.fontFace) {
+            return 1.0 / self.refractionIndex;
+        } else {
+            return self.refractionIndex;
+        }
+    }
+};
+
+pub inline fn reflect(v: Vec3, n: Vec3) Vec3 {
+    return v - (@as(Vec3, @splat(2 * dot(v, n))) * n);
+}
+
+pub inline fn refract(uv: Vec3, n: Vec3, etaiOverEtat: f64) Vec3 {
+    const cosTheta = @min(dot(-uv, n), 1.0);
+    const rOutPerp: Vec3 = @as(Vec3, @splat(etaiOverEtat)) * (uv + @as(Vec3, @splat(cosTheta)) * n);
+    const rOutParallell = @as(Vec3, @splat(-@sqrt(@abs(1 - dot(rOutPerp, rOutPerp))))) * n;
+    return rOutPerp + rOutParallell;
+}
+
+pub inline fn reflectance(cosine: f64, rfi: f64) f64 {
+    var r0 = (1 - rfi) / (1 + rfi);
+    r0 = r0 * r0;
+    return r0 + (1 - r0) * std.math.pow(f64, (1 - cosine), 5);
+}

@@ -18,6 +18,7 @@ const Sphere = @import("Object.zig").Sphere;
 const Random = std.Random;
 const Material = @import("Material.zig").Material;
 const Lambertian = @import("Material.zig").Lambertian;
+const Dielectric = @import("Material.zig").Dielectric;
 const Metal = @import("Material.zig").Metal;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
@@ -48,7 +49,8 @@ pub fn main() !void {
     var world = Hittable.init(arena);
 
     const middleSphere = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
-    const leftSphere = Metal.init(Vec3{ 0.8, 0.8, 0.9 }, 0.1);
+    const leftSphere = Dielectric.init(1.5);
+    const leftBubble = Dielectric.init(1.0 / 1.5);
     const rightSphere = Metal.init(Vec3{ 0.8, 0.6, 0.2 }, 1.0);
     const groundSphere = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
 
@@ -61,15 +63,20 @@ pub fn main() !void {
             ),
         },
     });
+
+    try world.add(HittableObject{ .object = .{ .sphere = Sphere.init(
+        Vec3{ -1, 0, -1 },
+        0.4,
+        .{ .material = .{ .Dielectric = leftBubble } },
+    ) } });
     try world.add(HittableObject{
-        .object = .{
-            .sphere = Sphere.init(
-                Vec3{ -1, 0, -1 },
-                0.5,
-                .{ .material = .{ .Metal = leftSphere } },
-            ),
-        },
+        .object = .{ .sphere = Sphere.init(
+            Vec3{ -1, 0, -1 },
+            0.5,
+            .{ .material = .{ .Dielectric = leftSphere } },
+        ) },
     });
+
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(

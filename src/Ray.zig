@@ -62,6 +62,11 @@ pub const Ray = struct {
                                 didScatter = true;
                             }
                         },
+                        .Dielectric => |dielectric| {
+                            if (dielectric.scatter(&self, &rec, &attenuation, &scattered, rand)) {
+                                didScatter = true;
+                            }
+                        },
                     }
                 },
             }
