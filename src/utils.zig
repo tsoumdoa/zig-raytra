@@ -63,6 +63,20 @@ pub inline fn randomOnSphere(random: std.Random, normal: Vec3) Vec3 {
     return -onUnitSphere;
 }
 
+pub inline fn randomDouble(random: std.Random) f64 {
+    //return from - 1 to 1
+    return random.float(f64) * 2 - 1;
+}
+
+pub inline fn randomInUnitDisk(random: std.Random) Vec3 {
+    while (true) {
+        const p = Vec3{ randomDouble(random), randomDouble(random), 0 };
+        if (math.sqrt(dot(p, p)) < 1) {
+            return p;
+        }
+    }
+}
+
 pub inline fn writeToFile(file_name: []const u8, image_width: u32, image_height: u32, texture_buffer: *[image_height][image_width]@Vector(3, u8)) !void {
     const ppm = try std.fs.cwd().createFile(file_name, .{});
     defer ppm.close();

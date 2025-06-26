@@ -28,15 +28,18 @@ const IMAGE_WIDTH_F = @as(f64, @floatFromInt(IMAGE_WIDTH));
 const IMAGE_HEIGHT_F = IMAGE_WIDTH_F / ASPECT_RATIO;
 const IMAGE_HEIGHT: u32 = @as(u32, @intFromFloat(IMAGE_HEIGHT_F));
 
+const VFOV = 20;
 const LOOK_FROM = Vec3{ -2, 2, 1 };
 const LOOK_AT = Vec3{ 0, 0, -1 };
 const VUP = Vec3{ 0, 1, 0 };
 
+const DEFOCUS_ANGLE: f64 = 10.0;
+const FOCUS_DIST: f64 = 3.4;
+
 const FOCAL_LENGTH: f64 = math.sqrt(dot(LOOK_FROM - LOOK_AT, LOOK_FROM - LOOK_AT));
-const VFOV = 20;
 const theta = math.degreesToRadians(VFOV);
 const h = math.tan(theta / 2.0);
-const VIEWPORT_HEIGHT: f64 = 2 * h * FOCAL_LENGTH;
+const VIEWPORT_HEIGHT: f64 = 2 * h * FOCUS_DIST;
 const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * ASPECT_RATIO;
 const CAMERA_CENTER: Vec3 = LOOK_FROM;
 
@@ -107,12 +110,13 @@ pub fn main() !void {
         VIEWPORT_WIDTH,
         VIEWPORT_HEIGHT,
         CAMERA_CENTER,
-        FOCAL_LENGTH,
         VFOV,
         rand,
         LOOK_FROM,
         LOOK_AT,
         VUP,
+        DEFOCUS_ANGLE,
+        FOCUS_DIST,
     );
     try camera.render(IMAGE_HEIGHT, IMAGE_WIDTH, &world, &textureBuffer);
     try writeToFile("texture.ppm", IMAGE_WIDTH, IMAGE_HEIGHT, &textureBuffer);
