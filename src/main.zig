@@ -16,6 +16,10 @@ const HittableObject = @import("Hittable.zig").HittableObject;
 const ObjectType = @import("Hittable.zig").ObjectType;
 const Sphere = @import("Object.zig").Sphere;
 const Random = std.Random;
+const Material = @import("Material.zig").Material;
+const Lambertian = @import("Material.zig").Lambertian;
+const Dielectric = @import("Material.zig").Dielectric;
+const Metal = @import("Material.zig").Metal;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 400;
@@ -43,20 +47,51 @@ pub fn main() !void {
     const rand = prng.random();
 
     var world = Hittable.init(arena);
+
+    const middleSphere = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
+    const leftSphere = Dielectric.init(1.5);
+    const leftBubble = Dielectric.init(1.0 / 1.5);
+    const rightSphere = Metal.init(Vec3{ 0.8, 0.6, 0.2 }, 1.0);
+    const groundSphere = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
+
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
                 Vec3{ 0, 0, -1 },
                 0.5,
+                .{ .material = .{ .Lambertian = middleSphere } },
             ),
         },
+    });
+
+    try world.add(HittableObject{ .object = .{ .sphere = Sphere.init(
+        Vec3{ -1, 0, -1 },
+        0.4,
+        .{ .material = .{ .Dielectric = leftBubble } },
+    ) } });
+    try world.add(HittableObject{
+        .object = .{ .sphere = Sphere.init(
+            Vec3{ -1, 0, -1 },
+            0.5,
+            .{ .material = .{ .Dielectric = leftSphere } },
+        ) },
     });
 
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
+                Vec3{ 1, 0, -1 },
+                0.5,
+                .{ .material = .{ .Metal = rightSphere } },
+            ),
+        },
+    });
+    try world.add(HittableObject{
+        .object = .{
+            .sphere = Sphere.init(
                 Vec3{ 0, -100.5, -1 },
                 100,
+                .{ .material = .{ .Lambertian = groundSphere } },
             ),
         },
     });

@@ -4,10 +4,12 @@ const normalize = @import("utils.zig").normalize;
 const dot = @import("utils.zig").dot;
 const std = @import("std");
 const math = std.math;
+const Random = std.Random;
 const Hittable = @import("Hittable.zig").Hittable;
 const HitRecord = @import("Hittable.zig").HitRecord;
 const Interval = @import("utils.zig").Interval;
 const randomOnSphere = @import("utils.zig").randomOnSphere;
+const randomUnitVector = @import("utils.zig").randomUnitVector;
 
 pub const Ray = struct {
     origin: Vec3,
@@ -29,17 +31,58 @@ pub const Ray = struct {
         return dot(self.direction, self.direction);
     }
 
-    pub fn rayColor(self: Ray, rand: std.Random, world: *Hittable, depth: u8) Vec3 {
+    pub fn rayColor(
+        self: Ray,
+        rand: std.Random,
+        world: *Hittable,
+        depth: u8,
+    ) Vec3 {
         if (depth <= 0) return Vec3{ 0, 0, 0 };
+
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0.001, math.floatMax(f64));
-        if (world.hit(&self, &interval, &rec)) {
-            const dir = randomOnSphere(rand, rec.normal) + rec.normal;
-            const ray = Ray.init(rec.p, dir);
-            return @as(Vec3, @splat(0.5)) * ray.rayColor(rand, world, depth - 1);
+
+        const hitObject = world.hit(&self, &interval, &rec);
+        if (hitObject) |hittableObject| {
+            var scattered: Ray = undefined;
+            var attenuation: Vec3 = undefined;
+
+            var didScatter = false;
+            switch (hittableObject.object) {
+                .sphere => |sphere| {
+                    const material = sphere.material.material;
+                    switch (material) {
+                        .Lambertian => |lambertian| {
+                            if (lambertian.scatter(&rec, &attenuation, &scattered, rand)) {
+                                didScatter = true;
+                            }
+                        },
+                        .Metal => |metal| {
+                            if (metal.scatter(&self, &rec, &attenuation, &scattered, rand)) {
+                                didScatter = true;
+                            }
+                        },
+                        .Dielectric => |dielectric| {
+                            if (dielectric.scatter(&self, &rec, &attenuation, &scattered, rand)) {
+                                didScatter = true;
+                            }
+                        },
+                    }
+                },
+            }
+            if (didScatter) {
+                return attenuation * scattered.rayColor(rand, world, depth - 1);
+            } else {
+                return Vec3{ 0, 0, 0 };
+            }
         }
         const unitDirection = normalize(self.direction);
         const a = @as(Vec3, @splat(0.5)) * (@as(Vec3, @splat(unitDirection[1] + 1)));
         return (@as(Vec3, @splat(1)) - a) * @as(Vec3, @splat(1)) + a * Vec3{ 0.5, 0.7, 1.0 };
+    }
+
+    pub inline fn nearZero(self: Ray) bool {
+        const s = 1e-8;
+        return (@abs(self.direction[0]) < s and @abs(self.direction[1]) < s and @abs(self.direction[2]) < s);
     }
 };
