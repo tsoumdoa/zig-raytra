@@ -58,7 +58,7 @@ pub const Ray = struct {
                             }
                         },
                         .Metal => |metal| {
-                            if (metal.scatter(&self, &rec, &attenuation, &scattered)) {
+                            if (metal.scatter(&self, &rec, &attenuation, &scattered, rand)) {
                                 didScatter = true;
                             }
                         },

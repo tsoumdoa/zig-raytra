@@ -6,6 +6,7 @@ const Color = @import("Color.zig").Color;
 const HitRecord = @import("Hittable.zig").HitRecord;
 const Ray = @import("Ray.zig").Ray;
 const randomUnitVector = @import("utils.zig").randomUnitVector;
+const normalize = @import("utils.zig").normalize;
 
 pub const Material = struct {
     material: union(enum) {
@@ -44,13 +45,15 @@ pub const Lambertian = struct {
 
 pub const Metal = struct {
     albedo: Color,
+    fuzz: f64,
     r: f64,
     g: f64,
     b: f64,
 
-    pub fn init(c: Vec3) Metal {
+    pub fn init(c: Vec3, fuzz: f64) Metal {
         return Metal{
             .albedo = Color.init(c[0], c[1], c[2]),
+            .fuzz = fuzz,
             .r = c[0],
             .g = c[1],
             .b = c[2],
@@ -62,9 +65,10 @@ pub const Metal = struct {
         return v - (@as(Vec3, @splat(2 * dot(v, n))) * n);
     }
 
-    pub inline fn scatter(self: Metal, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray) bool {
+    pub inline fn scatter(self: Metal, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray, random: Random) bool {
         const reflected = self.reflect(rIn.direction, rec.normal);
-        scattered.* = Ray.init(rec.p, reflected);
+        const unitizedReflected = normalize(reflected) + (@as(Vec3, @splat(self.fuzz))) * randomUnitVector(random);
+        scattered.* = Ray.init(rec.p, unitizedReflected);
         attenuation.* = Vec3{ self.r, self.g, self.b };
         return true;
     }

@@ -48,8 +48,8 @@ pub fn main() !void {
     var world = Hittable.init(arena);
 
     const middleSphere = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
-    const leftSphere = Metal.init(Vec3{ 0.8, 0.8, 0.9 });
-    const rightSphere = Metal.init(Vec3{ 0.8, 0.6, 0.2 });
+    const leftSphere = Metal.init(Vec3{ 0.8, 0.8, 0.9 }, 0.1);
+    const rightSphere = Metal.init(Vec3{ 0.8, 0.6, 0.2 }, 1.0);
     const groundSphere = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
 
     try world.add(HittableObject{
@@ -88,7 +88,6 @@ pub fn main() !void {
             ),
         },
     });
-
 
     var textureBuffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
 
