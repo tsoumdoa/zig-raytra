@@ -9,6 +9,7 @@ const HitRecord = @import("Hittable.zig").HitRecord;
 const Interval = @import("utils.zig").Interval;
 const Random = std.Random;
 const cross = @import("utils.zig").cross;
+const randomInUnitDisk = @import("utils.zig").randomInUnitDisk;
 
 pub const Camera = struct {
     imageWidth: u32,
@@ -25,6 +26,9 @@ pub const Camera = struct {
     lookFrom: Vec3,
     lookAt: Vec3,
     vup: Vec3,
+    defocusDiskU: Vec3,
+    defocusDiskV: Vec3,
+    defocusAngle: f64,
 
     const samplePerPixel = 100;
     const maxDepth: u8 = 50;
@@ -35,12 +39,13 @@ pub const Camera = struct {
         comptime viewportWidth: f64,
         viewportHeight: f64,
         cameraCenter: Vec3,
-        focalLength: f64,
         vfov: f64,
         rand: Random,
         lookFrom: Vec3,
         lookAt: Vec3,
         vup: Vec3,
+        DEFOCUS_ANGLE: f64,
+        FOCUS_DIST: f64,
     ) !Camera {
         const imageWidth = @as(f64, @floatFromInt(imageWidthU));
         const imageHeight = @as(f64, @floatFromInt(imageHeightU));
@@ -58,8 +63,10 @@ pub const Camera = struct {
         const pdu = vu / @as(Vec3, @splat(imageWidth));
         const pdv = vh / @as(Vec3, @splat(imageHeight));
 
-        const vul = cameraCenter - (@as(Vec3, @splat(focalLength)) * w) - vu_half - vh_half;
+        const vul = cameraCenter - (@as(Vec3, @splat(FOCUS_DIST)) * w) - vu_half - vh_half;
         const p0l = vul + @Vector(3, f64){ 0.5, 0.5, 0.5 } * (pdu + pdv);
+
+        const defocutRadius = FOCUS_DIST * math.tan(math.degreesToRadians(DEFOCUS_ANGLE / 2));
 
         return Camera{
             .imageWidth = imageWidthU,
@@ -76,6 +83,9 @@ pub const Camera = struct {
             .lookFrom = lookFrom,
             .lookAt = lookAt,
             .vup = vup,
+            .defocusDiskU = @as(Vec3, @splat(defocutRadius)) * u,
+            .defocusDiskV = @as(Vec3, @splat(defocutRadius)) * v,
+            .defocusAngle = DEFOCUS_ANGLE,
         };
     }
 
@@ -84,8 +94,23 @@ pub const Camera = struct {
         const offsetX = @as(Vec3, @splat(i + offset[0])) * self.pixelDeltaU;
         const offsetY = @as(Vec3, @splat(j + offset[1])) * self.pixelDeltaV;
         const pixelSample = self.pixel00Loc + offsetX + offsetY;
-        const rayDir = pixelSample - self.cameraCenter;
-        return Ray.init(self.cameraCenter, rayDir);
+
+        const rayOri = self.rayOrigin();
+        const rayDir = pixelSample - rayOri;
+        return Ray.init(rayOri, rayDir);
+    }
+
+    pub inline fn rayOrigin(self: Camera) Vec3 {
+        if (self.defocusAngle <= 0) {
+            return self.cameraCenter;
+        } else {
+            return self.defocusDiskSample();
+        }
+    }
+
+    pub inline fn defocusDiskSample(self: Camera) Vec3 {
+        const p = randomInUnitDisk(self.rand);
+        return self.cameraCenter + (@as(Vec3, @splat(p[0])) * self.defocusDiskU) + (@as(Vec3, @splat(p[1])) * self.defocusDiskV);
     }
 
     pub inline fn sampleSquare(self: Camera) Vec3 {
