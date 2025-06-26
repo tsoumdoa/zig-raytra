@@ -19,12 +19,22 @@ pub const Camera = struct {
     pixelDeltaV: Vec3,
     viewportUpperLeft: Vec3,
     pixel00Loc: Vec3,
+    vfov: f64,
     rand: Random,
 
     const samplePerPixel = 100;
     const maxDepth: u8 = 50;
 
-    pub fn init(imageWidthU: u32, comptime imageHeightU: u32, comptime viewportWidth: f64, viewportHeight: f64, cameraCenter: Vec3, focalLength: f32, rand: Random) !Camera {
+    pub fn init(
+        imageWidthU: u32,
+        comptime imageHeightU: u32,
+        comptime viewportWidth: f64,
+        viewportHeight: f64,
+        cameraCenter: Vec3,
+        focalLength: f32,
+        vfov: f64,
+        rand: Random,
+    ) !Camera {
         const imageWidth = @as(f64, @floatFromInt(imageWidthU));
         const imageHeight = @as(f64, @floatFromInt(imageHeightU));
         const vu = Vec3{ viewportWidth, 0, 0 };
@@ -49,6 +59,7 @@ pub const Camera = struct {
             .pixelDeltaV = pdv,
             .viewportUpperLeft = vul,
             .pixel00Loc = p0l,
+            .vfov = vfov,
             .rand = rand,
         };
     }
