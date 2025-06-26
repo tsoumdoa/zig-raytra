@@ -39,7 +39,7 @@ pub const Lambertian = struct {
         random: Random,
     ) bool {
         var scatterDir = rec.normal + randomUnitVector(random);
-        const scatterRay = Ray.init(rec.normal, scatterDir);
+        const scatterRay = Ray.init(rec.p, scatterDir);
         if (scatterRay.nearZero()) {
             scatterDir = rec.normal;
         }
