@@ -8,6 +8,7 @@ const Color = @import("Color.zig").Color;
 const HitRecord = @import("Hittable.zig").HitRecord;
 const Interval = @import("utils.zig").Interval;
 const Random = std.Random;
+const cross = @import("utils.zig").cross;
 
 pub const Camera = struct {
     imageWidth: u32,
@@ -21,6 +22,9 @@ pub const Camera = struct {
     pixel00Loc: Vec3,
     vfov: f64,
     rand: Random,
+    lookFrom: Vec3,
+    lookAt: Vec3,
+    vup: Vec3,
 
     const samplePerPixel = 100;
     const maxDepth: u8 = 50;
@@ -31,22 +35,30 @@ pub const Camera = struct {
         comptime viewportWidth: f64,
         viewportHeight: f64,
         cameraCenter: Vec3,
-        focalLength: f32,
+        focalLength: f64,
         vfov: f64,
         rand: Random,
+        lookFrom: Vec3,
+        lookAt: Vec3,
+        vup: Vec3,
     ) !Camera {
         const imageWidth = @as(f64, @floatFromInt(imageWidthU));
         const imageHeight = @as(f64, @floatFromInt(imageHeightU));
-        const vu = Vec3{ viewportWidth, 0, 0 };
-        const vh = Vec3{ 0, -viewportHeight, 0 };
 
-        const vu_half = Vec3{ viewportWidth / 2, 0, 0 };
-        const vh_half = Vec3{ 0, -viewportHeight / 2, 0 };
+        const w = normalize(lookFrom - lookAt);
+        const u = normalize(cross(vup, w));
+        const v = cross(w, u);
 
-        const pdu = Vec3{ viewportWidth / imageWidth, 0, 0 };
-        const pdv = Vec3{ 0, -viewportHeight / imageHeight, 0 };
+        const vu = @as(Vec3, @splat(viewportWidth)) * u;
+        const vh = @as(Vec3, @splat(viewportHeight)) * -v;
 
-        const vul = cameraCenter - @Vector(3, f64){ 0, 0, focalLength } - vu_half - vh_half;
+        const vu_half = vu / @as(Vec3, @splat(2));
+        const vh_half = vh / @as(Vec3, @splat(2));
+
+        const pdu = vu / @as(Vec3, @splat(imageWidth));
+        const pdv = vh / @as(Vec3, @splat(imageHeight));
+
+        const vul = cameraCenter - (@as(Vec3, @splat(focalLength)) * w) - vu_half - vh_half;
         const p0l = vul + @Vector(3, f64){ 0.5, 0.5, 0.5 } * (pdu + pdv);
 
         return Camera{
@@ -61,6 +73,9 @@ pub const Camera = struct {
             .pixel00Loc = p0l,
             .vfov = vfov,
             .rand = rand,
+            .lookFrom = lookFrom,
+            .lookAt = lookAt,
+            .vup = vup,
         };
     }
 
