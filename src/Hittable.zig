@@ -56,7 +56,7 @@ pub const Hittable = struct {
         try self.hittableObject.append(hittableObject);
     }
 
-    pub inline fn hit(self: *Hittable, r: *const Ray, rayT: *Interval, hitRec: *HitRecord) bool {
+    pub inline fn hit(self: *Hittable, r: *const Ray, rayT: *Interval, hitRec: *HitRecord) ?*const HittableObject {
         var tempRec = HitRecord.init(Vec3{ 0, 0, 0 }, Vec3{ 0, 0, 0 }, 0, false);
         var hitAnything = false;
         var closestSoFar = rayT.max;
@@ -70,8 +70,9 @@ pub const Hittable = struct {
                 hitAnything = true;
                 closestSoFar = tempRec.t;
                 hitRec.* = tempRec;
+                return &hittableObject;
             }
         }
-        return hitAnything;
+        return null;
     }
 };

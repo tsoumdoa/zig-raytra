@@ -10,7 +10,7 @@ const randomUnitVector = @import("utils.zig").randomUnitVector;
 pub const Material = struct {
     material: union(enum) {
         Lambertian: Lambertian,
-        Steel: Steel,
+        Metal: Metal,
     },
 };
 
@@ -42,14 +42,14 @@ pub const Lambertian = struct {
     }
 };
 
-pub const Steel = struct {
+pub const Metal = struct {
     albedo: Color,
     r: f64,
     g: f64,
     b: f64,
 
-    pub fn init(c: Vec3) Steel {
-        return Steel{
+    pub fn init(c: Vec3) Metal {
+        return Metal{
             .albedo = Color.init(c[0], c[1], c[2]),
             .r = c[0],
             .g = c[1],
@@ -57,12 +57,12 @@ pub const Steel = struct {
         };
     }
 
-    pub inline fn reflect(self: Steel, v: Vec3, n: Vec3) Vec3 {
+    pub inline fn reflect(self: Metal, v: Vec3, n: Vec3) Vec3 {
         _ = self;
-        return v - @as(Vec3, @splat(2 * dot(v, n))) * n;
+        return v - (@as(Vec3, @splat(2 * dot(v, n))) * n);
     }
 
-    pub inline fn scatter(self: Steel, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray) bool {
+    pub inline fn scatter(self: Metal, rIn: *const Ray, rec: *HitRecord, attenuation: *Vec3, scattered: *Ray) bool {
         const reflected = self.reflect(rIn.direction, rec.normal);
         scattered.* = Ray.init(rec.p, reflected);
         attenuation.* = Vec3{ self.r, self.g, self.b };

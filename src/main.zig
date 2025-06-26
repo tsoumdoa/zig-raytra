@@ -18,7 +18,7 @@ const Sphere = @import("Object.zig").Sphere;
 const Random = std.Random;
 const Material = @import("Material.zig").Material;
 const Lambertian = @import("Material.zig").Lambertian;
-const Steel = @import("Material.zig").Steel;
+const Metal = @import("Material.zig").Metal;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 400;
@@ -48,6 +48,8 @@ pub fn main() !void {
     var world = Hittable.init(arena);
 
     const middleSphere = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
+    const leftSphere = Metal.init(Vec3{ 0.8, 0.8, 0.9 });
+    const rightSphere = Metal.init(Vec3{ 0.8, 0.6, 0.2 });
     const groundSphere = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
 
     try world.add(HittableObject{
@@ -62,12 +64,31 @@ pub fn main() !void {
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
+                Vec3{ -1, 0, -1 },
+                0.5,
+                .{ .material = .{ .Metal = leftSphere } },
+            ),
+        },
+    });
+    try world.add(HittableObject{
+        .object = .{
+            .sphere = Sphere.init(
+                Vec3{ 1, 0, -1 },
+                0.5,
+                .{ .material = .{ .Metal = rightSphere } },
+            ),
+        },
+    });
+    try world.add(HittableObject{
+        .object = .{
+            .sphere = Sphere.init(
                 Vec3{ 0, -100.5, -1 },
                 100,
                 .{ .material = .{ .Lambertian = groundSphere } },
             ),
         },
     });
+
 
     var textureBuffer: [IMAGE_HEIGHT][IMAGE_WIDTH]@Vector(3, u8) = @splat(@splat(@Vector(3, u8){ 0, 4, 0 }));
 

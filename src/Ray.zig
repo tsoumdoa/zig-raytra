@@ -42,37 +42,33 @@ pub const Ray = struct {
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0.001, math.floatMax(f64));
 
-        //world.hit sld return the hit objec or undefined
-        if (world.hit(&self, &interval, &rec)) {
+        const hitObject = world.hit(&self, &interval, &rec);
+        if (hitObject) |hittableObject| {
             var scattered: Ray = undefined;
             var attenuation: Vec3 = undefined;
 
-            //if has object then run the following logic... 
-            for (world.hittableObject.items) |hittableObject| {
-                var didScatter = false;
-                switch (hittableObject.object) {
-                    .sphere => |sphere| {
-                        const material = sphere.material.material;
-                        switch (material) {
-                            .Lambertian => |lambertian| {
-                                if (lambertian.scatter(&rec, &attenuation, &scattered, rand)) {
-                                    didScatter = true;
-                                }
-                            },
-                            .Steel => |steel| {
-                                const rIn = Ray.init(rec.p, rec.normal + randomUnitVector(rand));
-                                if (steel.scatter(&rIn, &rec, &attenuation, &scattered)) {
-                                    didScatter = true;
-                                }
-                            },
-                        }
-                    },
-                }
-                if (didScatter) {
-                    return attenuation * scattered.rayColor(rand, world, depth - 1);
-                } else {
-                    return Vec3{ 0, 0, 0 };
-                }
+            var didScatter = false;
+            switch (hittableObject.object) {
+                .sphere => |sphere| {
+                    const material = sphere.material.material;
+                    switch (material) {
+                        .Lambertian => |lambertian| {
+                            if (lambertian.scatter(&rec, &attenuation, &scattered, rand)) {
+                                didScatter = true;
+                            }
+                        },
+                        .Metal => |metal| {
+                            if (metal.scatter(&self, &rec, &attenuation, &scattered)) {
+                                didScatter = true;
+                            }
+                        },
+                    }
+                },
+            }
+            if (didScatter) {
+                return attenuation * scattered.rayColor(rand, world, depth - 1);
+            } else {
+                return Vec3{ 0, 0, 0 };
             }
         }
         const unitDirection = normalize(self.direction);
