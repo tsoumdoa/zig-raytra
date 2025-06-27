@@ -56,23 +56,26 @@ pub const Hittable = struct {
         try self.hittableObject.append(hittableObject);
     }
 
-    pub inline fn hit(self: *Hittable, r: *const Ray, rayT: *Interval, hitRec: *HitRecord) ?*const HittableObject {
-        var tempRec = HitRecord.init(Vec3{ 0, 0, 0 }, Vec3{ 0, 0, 0 }, 0, false);
+    pub inline fn hit(self: *Hittable, r: *const Ray, rayT: *Interval, hitRec: *HitRecord, closestSoFar: *f64) ?usize {
+        var tempRec: HitRecord = undefined;
         var hitAnything = false;
-        var closestSoFar = rayT.max;
+        var hitObjIndex: ?usize = null;
 
-        for (self.hittableObject.items) |hittableObject| {
-            const interval = Interval.init(rayT.min, closestSoFar);
+        var objLength = self.hittableObject.items.len;
+
+        while (objLength > 0) : (objLength -= 1) {
+            const hittableObject = self.hittableObject.items[objLength - 1];
+            const interval = Interval.init(rayT.min, closestSoFar.*);
             const hitP = switch (hittableObject.object) {
                 .sphere => |sphere| sphere.hit(r, interval, &tempRec),
             };
             if (hitP) {
                 hitAnything = true;
-                closestSoFar = tempRec.t;
+                closestSoFar.* = tempRec.t;
                 hitRec.* = tempRec;
-                return &hittableObject;
+                hitObjIndex = objLength - 1;
             }
         }
-        return null;
+        return hitObjIndex;
     }
 };

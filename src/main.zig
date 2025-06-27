@@ -23,18 +23,18 @@ const Metal = @import("Material.zig").Metal;
 const dot = @import("utils.zig").dot;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 400;
+const IMAGE_WIDTH: u32 = 1200; // 400 for dev
 const IMAGE_WIDTH_F = @as(f64, @floatFromInt(IMAGE_WIDTH));
 const IMAGE_HEIGHT_F = IMAGE_WIDTH_F / ASPECT_RATIO;
 const IMAGE_HEIGHT: u32 = @as(u32, @intFromFloat(IMAGE_HEIGHT_F));
 
 const VFOV = 20;
-const LOOK_FROM = Vec3{ -2, 2, 1 };
-const LOOK_AT = Vec3{ 0, 0, -1 };
+const LOOK_FROM = Vec3{ 13, 2, 3 };
+const LOOK_AT = Vec3{ 0, 0, 0 };
 const VUP = Vec3{ 0, 1, 0 };
 
-const DEFOCUS_ANGLE: f64 = 10.0;
-const FOCUS_DIST: f64 = 3.4;
+const DEFOCUS_ANGLE: f64 = 0.6;
+const FOCUS_DIST: f64 = 10.0;
 
 const FOCAL_LENGTH: f64 = math.sqrt(dot(LOOK_FROM - LOOK_AT, LOOK_FROM - LOOK_AT));
 const theta = math.degreesToRadians(VFOV);
@@ -59,45 +59,108 @@ pub fn main() !void {
 
     var world = Hittable.init(arena);
 
-    const materialGround = Lambertian.init(Vec3{ 0.8, 0.8, 0 });
-    const materialCenter = Lambertian.init(Vec3{ 0.1, 0.2, 0.5 });
-    const materialLeft = Dielectric.init(1.0 / 1.33);
-    const materialRight = Metal.init(Vec3{ 0.8, 0.6, 0.2 }, 1.0);
+    var a: f64 = -11;
 
+    const groundMat = Material{ .material = .{ .Lambertian = Lambertian.init(Vec3{ 0.5, 0.5, 0.5 }) } };
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
-                Vec3{ -1, 0, -1 },
-                0.5,
-                .{ .material = .{ .Dielectric = materialLeft } },
+                Vec3{ 0, -1000, 0 },
+                1000,
+                groundMat,
             ),
         },
     });
 
+    while (a < 11) : (a += 1) {
+        var b: f64 = -11;
+        while (b < 11) : (b += 1) {
+            const chooseMat = rand.float(f64);
+            const center = Vec3{ a + 0.9 * rand.float(f64), 0.2, b + 0.9 * rand.float(f64) };
+
+            const pt = Vec3{ 4, 0.2, 0 };
+            const ptFromCen = center - pt;
+            const length = @sqrt(dot(ptFromCen, ptFromCen));
+
+            if (length > 0.9) {
+                var sphereMat: Material = undefined;
+
+                if (chooseMat < 0.8) {
+                    // diffusae
+                    const albedo = Vec3{ rand.float(f64), rand.float(f64), rand.float(f64) };
+                    sphereMat = Material{ .material = .{ .Lambertian = Lambertian.init(albedo) } };
+                    try world.add(HittableObject{
+                        .object = .{
+                            .sphere = Sphere.init(
+                                center,
+                                0.2,
+                                sphereMat,
+                            ),
+                        },
+                    });
+                } else if (chooseMat < 0.95) {
+                    // metal
+                    const albedo = Vec3{
+                        (rand.float(f64) + 1) / 2,
+                        (rand.float(f64) + 1) / 2,
+                        (rand.float(f64) + 1) / 2,
+                    };
+                    const fuzz = (rand.float(f64) + 1) / 2;
+                    sphereMat = Material{ .material = .{ .Metal = Metal.init(albedo, fuzz) } };
+                    try world.add(HittableObject{
+                        .object = .{
+                            .sphere = Sphere.init(
+                                center,
+                                0.2,
+                                sphereMat,
+                            ),
+                        },
+                    });
+                } else {
+                    // glass
+                    sphereMat = Material{ .material = .{ .Dielectric = Dielectric.init(1.5) } };
+                    try world.add(HittableObject{
+                        .object = .{
+                            .sphere = Sphere.init(
+                                center,
+                                0.2,
+                                sphereMat,
+                            ),
+                        },
+                    });
+                }
+            }
+        }
+    }
+
+    const materialOne = Material{ .material = .{ .Dielectric = Dielectric.init(1.5) } };
+    const materialTwo = Material{ .material = .{ .Lambertian = Lambertian.init(Vec3{ 0.4, 0.2, 0.1 }) } };
+    const materialThree = Material{ .material = .{ .Metal = Metal.init(Vec3{ 0.7, 0.6, 0.5 }, 0.0) } };
+
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
-                Vec3{ 0, 0, -1.2 },
-                0.5,
-                .{ .material = .{ .Lambertian = materialCenter } },
+                Vec3{ 0, 1, 0 },
+                1.0,
+                materialOne,
             ),
         },
     });
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
-                Vec3{ 1, 0, -1 },
-                0.5,
-                .{ .material = .{ .Metal = materialRight } },
+                Vec3{ -4, 1, 0 },
+                1.0,
+                materialTwo,
             ),
         },
     });
     try world.add(HittableObject{
         .object = .{
             .sphere = Sphere.init(
-                Vec3{ 0, -100.5, -1.0 },
-                100,
-                .{ .material = .{ .Lambertian = materialGround } },
+                Vec3{ 4, 1, 0 },
+                1.0,
+                materialThree,
             ),
         },
     });

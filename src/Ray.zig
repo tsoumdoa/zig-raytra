@@ -41,11 +41,13 @@ pub const Ray = struct {
 
         var rec = HitRecord.init(self.origin, self.direction, 0, false);
         var interval = Interval.init(0.001, math.floatMax(f64));
+        var closestSoFar = interval.max;
 
-        const hitObject = world.hit(&self, &interval, &rec);
-        if (hitObject) |hittableObject| {
+        const hitObject = world.hit(&self, &interval, &rec, &closestSoFar);
+        if (hitObject) |index| {
             var scattered: Ray = undefined;
             var attenuation: Vec3 = undefined;
+            const hittableObject = world.hittableObject.items[index];
 
             var didScatter = false;
             switch (hittableObject.object) {
