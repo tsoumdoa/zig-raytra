@@ -30,7 +30,7 @@ pub const Camera = struct {
     defocusDiskV: Vec3,
     defocusAngle: f64,
 
-    const samplePerPixel = 500; //10 for
+    const samplePerPixel = 200; //10 for dev
     const maxDepth: u8 = 50;
 
     pub fn init(
